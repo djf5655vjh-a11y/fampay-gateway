@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Admin Authentication</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-glow"></div>
+    
+    <div class="glass-container">
+        <header class="gateway-header">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h1>Private Access Portal</h1>
+            <p>Secure Gateway Protection</p>
+        </header>
+
+        {% if step == "register" %}
+        <!-- REGISTER ADMIN -->
+        <div class="panel">
+            <h2><i class="fa-solid fa-user-shield"></i> Create Admin Account</h2>
+            <p class="subtitle">Set up your private credentials so no unauthorized person can access this gateway.</p>
+            
+            <form id="auth-form" onsubmit="handleAuth(event, '/api/register-admin')">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-user"></i> Admin Username</label>
+                    <input type="text" id="username" required placeholder="Choose a secure username">
+                </div>
+                <div class="input-group">
+                    <label><i class="fa-solid fa-key"></i> Admin Password</label>
+                    <input type="password" id="password" required placeholder="Choose a strong password">
+                </div>
+                <button type="submit" class="btn-primary">Create Secure Account <i class="fa-solid fa-arrow-right"></i></button>
+            </form>
+            <div id="auth-msg" class="message"></div>
+        </div>
+
+        {% elif step == "login" %}
+        <!-- LOGIN ADMIN -->
+        <div class="panel">
+            <h2><i class="fa-solid fa-lock"></i> Admin Login</h2>
+            <p class="subtitle">Enter your private credentials to access the dashboard.</p>
+            
+            <form id="auth-form" onsubmit="handleAuth(event, '/api/login')">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-user"></i> Username</label>
+                    <input type="text" id="username" required placeholder="Admin username">
+                </div>
+                <div class="input-group">
+                    <label><i class="fa-solid fa-key"></i> Password</label>
+                    <input type="password" id="password" required placeholder="Admin password">
+                </div>
+                <button type="submit" class="btn-primary">Login Securely <i class="fa-solid fa-right-to-bracket"></i></button>
+            </form>
+            <div id="auth-msg" class="message"></div>
+        </div>
+
+        {% elif step == "gateway_config" %}
+        <!-- GMAIL & UPI CONFIG -->
+        <div class="panel">
+            <h2><i class="fa-solid fa-sliders"></i> Gateway Setup</h2>
+            <p class="subtitle">Link your Gmail App Password and FamPay UPI ID.</p>
+            
+            <form id="gateway-form" onsubmit="handleGatewaySetup(event)">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-envelope"></i> Gmail Address</label>
+                    <input type="email" id="gmail_user" required placeholder="merchant@gmail.com">
+                </div>
+                <div class="input-group">
+                    <label><i class="fa-solid fa-lock"></i> Google App Password</label>
+                    <input type="password" id="gmail_pass" required placeholder="16-character app password">
+                </div>
+                <div class="input-group">
+                    <label><i class="fa-solid fa-wallet"></i> Receiver UPI ID</label>
+                    <input type="text" id="upi_id" required placeholder="username@fampay">
+                </div>
+                <button type="submit" class="btn-primary">Activate Gateway <i class="fa-solid fa-bolt"></i></button>
+            </form>
+            <div id="auth-msg" class="message"></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        async function handleAuth(event, endpoint) {
+            event.preventDefault();
+            const btn = event.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = 'Authenticating... <i class="fa-solid fa-spinner fa-spin"></i>';
+
+            const data = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            const msgDiv = document.getElementById('auth-msg');
+
+            if(result.status === 'success') {
+                msgDiv.style.color = '#10b981';
+                msgDiv.textContent = result.message;
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.textContent = result.message;
+                btn.disabled = false;
+                btn.innerHTML = 'Try Again <i class="fa-solid fa-arrow-right"></i>';
+            }
+        }
+
+        async function handleGatewaySetup(event) {
+            event.preventDefault();
+            const btn = event.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = 'Configuring Gateway... <i class="fa-solid fa-spinner fa-spin"></i>';
+
+            const data = {
+                gmail_user: document.getElementById('gmail_user').value,
+                gmail_pass: document.getElementById('gmail_pass').value,
+                upi_id: document.getElementById('upi_id').value
+            };
+
+            const res = await fetch('/api/setup-gateway', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            const msgDiv = document.getElementById('auth-msg');
+
+            if(result.status === 'success') {
+                msgDiv.style.color = '#10b981';
+                msgDiv.textContent = result.message;
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.textContent = result.message;
+                btn.disabled = false;
+                btn.innerHTML = 'Activate Gateway <i class="fa-solid fa-bolt"></i>';
+            }
+        }
+    </script>
+</body>
+</html>
